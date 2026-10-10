@@ -1,0 +1,249 @@
+import React, { useMemo, useState } from "react";
+
+type Donor = {
+  id: number;
+  name: string;
+  blood: string;
+  city: string;
+  phone: string;
+};
+
+const bloodGroups = ["All", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+export default function App() {
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [blood, setBlood] = useState("All");
+  const [city, setCity] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [group, setGroup] = useState("A+");
+  const [location, setLocation] = useState("");
+  const [message, setMessage] = useState("");
+
+  const filtered = useMemo(
+    () =>
+      donors.filter(
+        (d) =>
+          (blood === "All" || d.blood === blood) &&
+          d.city.toLowerCase().includes(city.toLowerCase())
+      ),
+    [donors, blood, city]
+  );
+
+  function addDonor(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !phone.trim() || !location.trim()) {
+      setMessage("Please fill in all fields.");
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(phone.trim())) {
+      setMessage("Enter a valid 10-digit phone number.");
+      return;
+    }
+    setDonors((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name: name.trim(),
+        blood: group,
+        city: location.trim(),
+        phone: phone.trim(),
+      },
+    ]);
+    setName("");
+    setPhone("");
+    setLocation("");
+    setMessage("Donor added successfully!");
+  }
+
+  function deleteDonor(id: number) {
+    setDonors((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      <nav className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
+        <a href="#" className="text-2xl font-extrabold text-red-600">
+          ♥ LifeLink
+        </a>
+        <div className="flex gap-4 text-sm font-semibold">
+          <a href="#find">Find Donors</a>
+          <a href="#register">Register</a>
+        </div>
+      </nav>
+
+      <header className="bg-gradient-to-br from-red-700 to-rose-500 px-6 py-20 text-center text-white">
+        <div className="mx-auto max-w-3xl">
+          <p className="mb-3 font-semibold uppercase tracking-widest">
+            Every Drop Counts
+          </p>
+          <h1 className="text-4xl font-extrabold md:text-6xl">
+            Find a Blood Donor. Save a Life.
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-red-50">
+            Connect with blood donors in your city and help make a difference.
+          </p>
+          <a
+            href="#find"
+            className="mt-8 inline-block rounded-xl bg-white px-7 py-3 font-bold text-red-600 shadow-lg"
+          >
+            Find a Donor →
+          </a>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl space-y-12 px-5 py-12">
+        <section className="grid gap-4 sm:grid-cols-3">
+          {[
+            ["Registered Donors", donors.length],
+            ["Blood Groups", 8],
+            ["Our Mission", "Save Lives"],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-2xl bg-white p-6 text-center shadow-sm">
+              <p className="text-3xl font-extrabold text-red-600">{value}</p>
+              <p className="mt-2 text-slate-500">{label}</p>
+            </div>
+          ))}
+        </section>
+
+        <section id="find" className="scroll-mt-24">
+          <h2 className="text-3xl font-bold">Find Blood Donors</h2>
+          <p className="mt-2 text-slate-500">
+            Select a blood group and enter your city.
+          </p>
+          <div className="mt-6 grid gap-4 rounded-2xl bg-white p-5 shadow-sm md:grid-cols-3">
+            <select
+              className="rounded-xl border p-3"
+              value={blood}
+              onChange={(e) => setBlood(e.target.value)}
+              aria-label="Filter by blood group"
+            >
+              {bloodGroups.map((b) => (
+                <option key={b}>{b}</option>
+              ))}
+            </select>
+            <input
+              className="rounded-xl border p-3"
+              placeholder="Enter city or locality"
+              value={city}
+              onChange={(e) => setCity(e.target.value)
+            />
+            <button
+              onClick={() => {
+                setBlood("All");
+                setCity("");
+              }
+              className="rounded-xl border border-red-200 font-semibold text-red-600"
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((d) => (
+              <article key={d.id} className="rounded-2xl border bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-xl font-bold text-red-600">
+                    {d.blood}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">{d.name}</h3>
+                    <p className="text-sm text-slate-500">{d.city}</p>
+                  </div>
+                </div>
+                <a
+                  href={`tel:${d.phone}`}
+                  className="mt-5 block rounded-xl bg-red-600 p-3 text-center font-semibold text-white"
+                >
+                  Contact Donor
+                </a>
+                <button
+                  onClick={() => deleteDonor(d.id)}
+                  className="mt-3 w-full text-sm text-slate-500"
+                >
+                  Remove Demo Record
+                </button>
+              </article>
+            ))}
+            {filtered.length === 0 && (
+              <p className="col-span-full rounded-xl bg-white p-8 text-center text-slate-500">
+                No donors found. Register a donor to get started.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section id="register" className="scroll-mt-24">
+          <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-md sm:p-9">
+            <h2 className="text-3xl font-bold">Become a Donor ❤️</h2>
+            <p className="mt-2 text-slate-500">
+              Register your details to help people in need.
+            </p>
+            <form onSubmit={addDonor} className="mt-6 space-y-4">
+              <input
+                required
+                className="w-full rounded-xl border p-3"
+                placeholder="Full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <input
+                required
+                inputMode="numeric"
+                maxLength={10}
+                className="w-full rounded-xl border p-3"
+                placeholder="10-digit phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <select
+                className="w-full rounded-xl border p-3"
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+              >
+                {bloodGroups.slice(1).map((b) => (
+                  <option key={b}>{b}</option>
+                ))}
+              </select>
+              <input
+                required
+                className="w-full rounded-xl border p-3"
+                placeholder="City or locality"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+              <label className="flex gap-3 text-sm text-slate-600">
+                <input type="checkbox" required />
+                I consent to registering my details and sharing my contact
+                information with people searching for donors.
+              </label>
+              <button className="w-full rounded-xl bg-red-600 p-3 font-bold text-white hover:bg-red-700">
+                Register as Donor
+              </button>
+              {message && (
+                <p role="status" className="text-center font-medium text-red-600">
+                  {message}
+                </p>
+              )}
+            </form>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-red-50 p-7 text-center">
+          <h2 className="text-2xl font-bold text-red-700">How It Works</h2>
+          <div className="mt-5 grid gap-5 sm:grid-cols-3">
+            <div><strong>1. Search</strong><p className="mt-2 text-sm">Choose a blood group and city.</p></div>
+            <div><strong>2. Connect</strong><p className="mt-2 text-sm">Contact a registered donor with consent.</p></div>
+            <div><strong>3. Help</strong><p className="mt-2 text-sm">Coordinate with a hospital or blood bank.</p></div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="bg-slate-900 px-6 py-7 text-center text-sm text-white">
+        <p className="text-lg font-bold">♥ LifeLink – Blood Donor Finder</p>
+        <p className="mt-2 text-slate-300">Every Drop Counts. Every Donor Matters.</p>
+        <p className="mt-3 text-slate-400">College Project · MERN Stack Concept</p>
+      </footer>
+    </div>
+  );
+}
